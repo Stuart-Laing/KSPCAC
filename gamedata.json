@@ -1,0 +1,44 @@
+{
+  "bodies": {
+    "Kerbin": {
+      "radius": 600000,
+      "mass": 10,
+      "sphere of influence": 10
+    },
+    "Mun": {
+      "radius": 200000,
+      "mass": 975990660000000000000,
+      "sphere of influence": 2429559
+    }
+  },
+  "communication parts": {
+    "HG-5 High Gain Antenna": {
+      "alias": "HG5",
+      "power": 5000000,
+      "combinable": true,
+      "combinability exponent": 0.75,
+      "relay": true
+    },
+    "Communotron 16": {
+      "alias": "C16",
+      "power": 500000,
+      "combinable": true,
+      "combinability exponent": 1,
+      "relay": false
+    },
+    "Communotron DTS-M1": {
+      "alias": "DTS",
+      "power": 2000000000,
+      "combinable": true,
+      "combinability exponent": 0.75,
+      "relay": false
+    },
+    "RA-2 Relay Antenna": {
+      "alias": "RA2",
+      "power": 2000000000,
+      "combinable": true,
+      "combinability exponent": 0.75,
+      "relay": true
+    }
+  }
+}
