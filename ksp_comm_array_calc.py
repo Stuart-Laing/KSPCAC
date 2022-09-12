@@ -6,6 +6,7 @@ import sympy
 from sys import argv
 from typing import Optional
 from copy import copy
+import textwrap
 
 
 GAME_DATA_FILE_PATH = "gamedata.json"
@@ -14,6 +15,7 @@ GRAVITATIONAL_CONSTANT = 6.6743e-11
 # Make show options output alphabetical order and display moons under their respective parent body
 # Make comm parts show in alphabetical order and have the columns for the aliases line up
 # Give info on signal strength to kerbin
+# Have it check if you are using non relays on your satellites
 
 
 class CelestialBody:
@@ -23,11 +25,12 @@ class CelestialBody:
         self.radius: int = body_data["radius"]
         self.mass: int = body_data["mass"]
         self.sphere_of_influence: int = body_data["sphere of influence"]
+        self.parent_body: str = body_data["parent body"]
         self.standard_grav_const: float = self.mass * GRAVITATIONAL_CONSTANT
 
     def __repr__(self):
         return f"CelestialBody({self.name=}, {self.radius=}, {self.mass=}, " \
-               f"{self.sphere_of_influence=}, {self.standard_grav_const=})"
+               f"{self.sphere_of_influence=}, {self.parent_body=}, {self.standard_grav_const=})"
 
     def calculate_orbital_period(self, periapsis: int, apoapsis: int) -> int:
         avg_radius = (periapsis + apoapsis + self.radius * 2) / 2
@@ -41,6 +44,12 @@ class CelestialBody:
     def calculate_orbit_radius_with_period(self, period: int):
         return int(round(math.pow((period * math.sqrt(self.standard_grav_const)) /
                                   (2 * math.pi), 0.666666666666))) - self.radius
+
+    def calculate_delta_v_for_hohmann_transfer(self, start_radius: int, end_radius: int) -> int:
+        r1 = start_radius + self.radius
+        r2 = end_radius + self.radius
+
+        return int(round(math.sqrt(self.standard_grav_const / r1) * (math.sqrt((2 * r2) / (r1 + r2)) - 1)))
 
 
 class CommPart:
@@ -93,6 +102,27 @@ class GameData:
         return copy(lower_bodies[body_name.lower()])
 
 
+"""
+  Sun
+    Dres
+    Duna
+      Ike
+    Eeloo
+    Eve
+      Gilly
+    Jool
+      Bop
+      Laythe
+      Pol
+      Tylo
+      Vall
+    Kerbin
+      Minmus
+      Mun
+    Moho
+"""
+
+
 class ShowOptions(argparse.Action):
     def __init__(self, option_strings, dest=argparse.SUPPRESS, default=argparse.SUPPRESS, help=None):
         argparse.Action.__init__(self, option_strings=option_strings, dest=dest, default=default, nargs=0, help=help)
@@ -100,16 +130,69 @@ class ShowOptions(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
         game_data = read_game_data(GAME_DATA_FILE_PATH)
         print("Available celestial bodies:")
+        sorted_body_list: list[tuple[str, CelestialBody]] = \
+            sorted(game_data.bodies.items(), key=lambda x: (x[1].parent_body, x[1].name))
 
-        for body in game_data.bodies.values():
-            print(f"  {body.name}")
+        system_map = {body[1].name: ["", 0, body[1].parent_body] for body in sorted_body_list}
+        for index, part in enumerate(sorted_body_list):
+            new_root = part[1].parent_body
+            indent = "  "
+            while True:
+                if new_root == "":
+                    break
+                system_map[new_root][1] += 1
+                indent += "  "
+                new_root = game_data.bodies[new_root].parent_body
+
+            system_map[part[1].name][0] = indent
+
+        new_system_map = self.recursive_system_sorter("", 0, len(system_map) - 1, system_map)
+
+        for row in new_system_map:
+            print(row)
 
         print("\nAvailable communication parts:")
-        for part in game_data.comm_parts.values():
-            print(f"  {part.full_name}   |   alias = {part.alias}")
+        available_comm_part_matrix = [["Full Part Name", "Alias"]]
+        sorted_comm_list: list[tuple[str, CommPart]] = \
+            sorted(game_data.comm_parts.items(), key=lambda x: (x[1].relay, x[1].power))
 
-        print("\nFor modded items or bodies add them to the gamedata.json file")
+        for part in sorted_comm_list:
+            available_comm_part_matrix.append([part[1].full_name, part[1].alias])
+        print(pretty_table(available_comm_part_matrix, "  ", True))
+
+        print(f"\nFor modded items or bodies add them to the {GAME_DATA_FILE_PATH} file")
         parser.exit()
+
+    def recursive_system_sorter(self, parent_body, start_index, end_index, system_map):
+        if start_index > end_index:
+            return []
+
+        new_system_map = ["" for x in range(start_index, end_index + 1)]
+        current_index = 0
+        for body, data in system_map.items():
+            if data[2] == parent_body:
+                new_system_map[current_index] = data[0] + body
+
+                for index, body_string in enumerate(self.recursive_system_sorter(body, current_index + 1,
+                                                                           current_index + data[1], system_map)):
+                    new_system_map[current_index + 1 + index] = body_string
+
+                current_index += data[1] + 1
+
+        return new_system_map
+
+
+
+
+        starting_indent = "  "
+        current_index = 0
+
+        for body, data in system_map.items():
+            if data[0] == starting_indent:
+                print(body, current_index + 1, data[1])
+                current_index += data[1] + 1
+
+                # new_system_map[current_index % len(new_system_map)] = body
 
 
 def read_game_data(file_path: str) -> GameData:
@@ -233,6 +316,17 @@ def pretty_table(matrix: list[list[str]], row_prefix: str, top_line_is_column_ti
     return table[:-1]
 
 
+def pretty_speed(speed: int):
+    if speed >= 1000:
+        str_speed = str(speed)
+        x = len(str_speed) % 3
+        parts = [str_speed[:x]] + textwrap.wrap(str_speed[x:], 3)
+
+        return f"{','.join(parts)} m/s"
+    else:
+        return f"{speed} m/s"
+
+
 def calculate_combined_comm_power(comm_parts: list[CommPart]) -> int:
     # https://wiki.kerbalspaceprogram.com/wiki/CommNet#Combining_antennae
 
@@ -277,14 +371,15 @@ def create_comm_matrix(relay_power: int, minimum_strength: float, game_data: Gam
     return comm_matrix
 
 
-def calculate_recommendation_orbits(min_orbit: int, amount_of_recommendations: int,
-                                    target_body: CelestialBody) -> list[list[str]]:
+def create_orbit_recommendation_matrix(min_orbit: int, amount_of_recommendations: int,
+                                       target_body: CelestialBody) -> list[list[str]]:
     # Round up to the nearest hour multiple of 3
     start_orbit_period = 10800 * round(math.ceil(target_body.calculate_orbital_period(min_orbit, min_orbit)) / 10800)
 
-    recommendations = [["Satellite Radius", "Satellite Period", "Phase Periapsis", "Phase Period"]]
+    recommendations = [["Satellite Radius", "Satellite Period",
+                        "Phase Periapsis", "Phase Period", "Delta-V for Transfer"]]
     i = 0
-    while len(recommendations) < amount_of_recommendations:
+    while len(recommendations) - 1 < amount_of_recommendations:
         possible_recommendation = target_body.calculate_orbit_radius_with_period(start_orbit_period + 10800 * i)
 
         if possible_recommendation > target_body.sphere_of_influence:
@@ -301,15 +396,10 @@ def calculate_recommendation_orbits(min_orbit: int, amount_of_recommendations: i
         satellite_period = pretty_time(start_orbit_period + 10800 * i)
         phase_periapsis = pretty_distance(phase_orbit)
         phase_period = pretty_time(int(round((start_orbit_period + 10800 * i) * 0.666666666)))
+        delta_v = pretty_speed(target_body.calculate_delta_v_for_hohmann_transfer(phase_orbit, possible_recommendation))
 
-        recommendations.append([satellite_radius, satellite_period, phase_periapsis, phase_period])
+        recommendations.append([satellite_radius, satellite_period, phase_periapsis, phase_period, delta_v])
         i += 1
-
-
-
-    """
-    | Satellite radius | Satellite period | phase periapsis | phase period | 
-    """
 
     return recommendations
 
@@ -328,8 +418,8 @@ def main():
 
     help_epilog = """
     examples:
-      ksp-phase-calc.py -ob kerbin -cp COMM_PARTS
-      ksp-phase-calc.py -ob mun -cp COMM_PARTS
+      ksp_comm_array_calc.py -tb Mun -cp 2:HG5 -ms 80
+      ksp_comm_array_calc.py -tb Gilly -cp 2:HG5,3:RA2
     """
 
     parser = argparse.ArgumentParser(epilog=help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -379,6 +469,7 @@ def main():
 
     print(f"  Target body: {target_body.name}")
     print(f"  Target radius: {pretty_distance(target_body.radius)}")
+    print(f"  Target sphere of influence: {pretty_distance(target_body.sphere_of_influence)}")
     print(f"  Each satellite equipped with:")
     for part in comm_parts:
         print(f"      {part.quantity} {part.full_name}{'s' if part.quantity > 1 else ''}")
@@ -392,7 +483,7 @@ def main():
 
     matrix_of_comm_parts = create_comm_matrix(antenna_combined_power, min_strength, game_data)
 
-    matrix_of_recommended_orbits = calculate_recommendation_orbits(minimum_orbit, 5, target_body)
+    matrix_of_recommended_orbits = create_orbit_recommendation_matrix(minimum_orbit, 5, target_body)
     # TODO Make number of recs configurable
 
     # ================ Display Calculated Values ================
@@ -411,6 +502,7 @@ def main():
     print("  " + "=" * (length_of_table // 2 - 10) + " Recommended Orbits " + "=" *
           (length_of_table // 2 - (10 if length_of_table % 2 == 0 else 11)))
     print(table_of_recommended_orbits)
+    print()
 
 
 if __name__ == "__main__":

@@ -2,13 +2,105 @@
   "bodies": {
     "Kerbin": {
       "radius": 600000,
-      "mass": 10,
-      "sphere of influence": 10
+      "mass": 52915158000000000000000,
+      "sphere of influence": 84159286,
+      "parent body": "Sun"
     },
     "Mun": {
       "radius": 200000,
       "mass": 975990660000000000000,
-      "sphere of influence": 2429559
+      "sphere of influence": 2429559,
+      "parent body": "Kerbin"
+    },
+    "Sun": {
+      "radius": 261600000,
+      "mass": 17565459000000000000000000000,
+      "sphere of influence": 1000000000000000,
+      "parent body": ""
+    },
+    "Moho": {
+      "radius": 250000,
+      "mass": 2526331400000000000000,
+      "sphere of influence": 9646663,
+      "parent body": "Sun"
+    },
+    "Eve": {
+      "radius": 700000,
+      "mass": 122439800000000000000000,
+      "sphere of influence": 85109365,
+      "parent body": "Sun"
+    },
+    "Gilly": {
+      "radius": 13000,
+      "mass": 124203630000000000,
+      "sphere of influence": 126123,
+      "parent body": "Eve"
+    },
+    "Minmus": {
+      "radius": 60000,
+      "mass": 26457580000000000000,
+      "sphere of influence": 2247428,
+      "parent body": "Kerbin"
+    },
+    "Duna": {
+      "radius": 320000,
+      "mass": 4515427000000000000000,
+      "sphere of influence": 47921949,
+      "parent body": "Sun"
+    },
+    "Ike": {
+      "radius": 130000,
+      "mass": 278216150000000000000,
+      "sphere of influence": 1049598,
+      "parent body": "Duna"
+    },
+    "Dres": {
+      "radius": 138000,
+      "mass": 321909370000000000000,
+      "sphere of influence": 32832840,
+      "parent body": "Sun"
+    },
+    "Jool": {
+      "radius": 6000000,
+      "mass": 4233212700000000000000000,
+      "sphere of influence": 2455985200,
+      "parent body": "Sun"
+    },
+    "Laythe": {
+      "radius": 500000,
+      "mass": 29397311000000000000000,
+      "sphere of influence": 3723645,
+      "parent body": "Jool"
+    },
+    "Vall": {
+      "radius": 300000,
+      "mass": 3108765500000000000000,
+      "sphere of influence": 2406401,
+      "parent body": "Jool"
+    },
+    "Tylo": {
+      "radius": 600000,
+      "mass": 42332127000000000000000,
+      "sphere of influence": 10856518,
+      "parent body": "Jool"
+    },
+    "Bop": {
+      "radius": 65000,
+      "mass": 37261090000000000000,
+      "sphere of influence": 1221060,
+      "parent body": "Jool"
+    },
+    "Pol": {
+      "radius": 44000,
+      "mass": 10813507000000000000,
+      "sphere of influence": 1042138,
+      "parent body": "Jool"
+    },
+    "Eeloo": {
+      "radius": 210000,
+      "mass": 1114922400000000000000,
+      "sphere of influence": 119082940,
+      "parent body": "Sun"
     }
   },
   "communication parts": {
@@ -36,6 +128,41 @@
     "RA-2 Relay Antenna": {
       "alias": "RA2",
       "power": 2000000000,
+      "combinable": true,
+      "combinability exponent": 0.75,
+      "relay": true
+    },
+    "Communotron 16-S": {
+      "alias": "C16S",
+      "power": 500000,
+      "combinable": false,
+      "combinability exponent": 0,
+      "relay": false
+    },
+    "Communotron HG-55": {
+      "alias": "HG55",
+      "power": 15000000000,
+      "combinable": true,
+      "combinability exponent": 0.75,
+      "relay": false
+    },
+    "Communotron 88-88": {
+      "alias": "C88",
+      "power": 100000000000,
+      "combinable": true,
+      "combinability exponent": 0.75,
+      "relay": false
+    },
+    "RA-15 Relay Antenna": {
+      "alias": "RA15",
+      "power": 15000000000,
+      "combinable": true,
+      "combinability exponent": 0.75,
+      "relay": true
+    },
+    "RA-100 Relay Antenna": {
+      "alias": "RA100",
+      "power": 100000000000,
       "combinable": true,
       "combinability exponent": 0.75,
       "relay": true

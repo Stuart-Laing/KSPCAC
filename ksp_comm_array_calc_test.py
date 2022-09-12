@@ -2,7 +2,7 @@ import unittest
 from ksp_comm_array_calc import GameData, CelestialBody, CommPart
 from ksp_comm_array_calc import valid_percent, valid_comm_parts
 from ksp_comm_array_calc import read_game_data, GAME_DATA_FILE_PATH
-from ksp_comm_array_calc import pretty_distance, pretty_time, pretty_table
+from ksp_comm_array_calc import pretty_distance, pretty_time, pretty_speed
 from ksp_comm_array_calc import calculate_combined_comm_power, calculate_minimum_comm_distance
 
 
@@ -82,20 +82,28 @@ class TestGameData(unittest.TestCase):
 
 class TestCelestialBody(unittest.TestCase):
     def test_calculate_orbital_period(self):
-        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000})
+        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000, "sphere of influence": 0})
 
         self.assertEqual(28800, body.calculate_orbital_period(1254850, 565650))
         self.assertEqual(43200, body.calculate_orbital_period(1254850, 1254850))
 
     def test_calculate_orbit_radius_with_period(self):
-        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000})
+        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000, "sphere of influence": 0})
 
         self.assertEqual(1254855, body.calculate_orbit_radius_with_period(43200))
 
     def test_calculate_periapsis_with_apoapsis_and_period(self):
-        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000})
+        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000, "sphere of influence": 0})
 
         self.assertEqual(565669, body.calculate_periapsis_with_apoapsis_and_period(1254855, 28800))
+
+    def test_calculate_delta_v_for_hohmann_transfer(self):
+        body_1 = CelestialBody("test", {"radius": 600000, "mass": 52915158000000000000000, "sphere of influence": 0})
+
+        self.assertEqual(153, body_1.calculate_delta_v_for_hohmann_transfer(80000, 300000))
+
+        body_2 = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000, "sphere of influence": 0})
+        self.assertEqual(46, body_2.calculate_delta_v_for_hohmann_transfer(432000, 1000000))
 
 
 class TestHelperFunctions(unittest.TestCase):
@@ -144,6 +152,15 @@ class TestHelperFunctions(unittest.TestCase):
         self.assertEqual("256 hrs 34 mins 3 secs", pretty_time(923643))
         self.assertEqual("24 hrs 0 mins 0 secs", pretty_time(86400))
         self.assertEqual("9517 hrs 20 mins 17 secs", pretty_time(34262417))
+
+    def test_pretty_speed(self):
+        self.assertEqual("100 m/s", pretty_speed(100))
+        self.assertEqual("1 m/s", pretty_speed(1))
+        self.assertEqual("254 m/s", pretty_speed(254))
+        self.assertEqual("999 m/s", pretty_speed(999))
+        self.assertEqual("1,000 m/s", pretty_speed(1000))
+        self.assertEqual("1,526 m/s", pretty_speed(1526))
+        self.assertEqual("1,273,893 m/s", pretty_speed(1273893))
 
 
 class TestCommunicationCalculators(unittest.TestCase):
