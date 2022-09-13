@@ -11,11 +11,6 @@ import textwrap
 
 GAME_DATA_FILE_PATH = "gamedata.json"
 GRAVITATIONAL_CONSTANT = 6.6743e-11
-# TODO
-# Make show options output alphabetical order and display moons under their respective parent body
-# Make comm parts show in alphabetical order and have the columns for the aliases line up
-# Give info on signal strength to kerbin
-# Have it check if you are using non relays on your satellites
 
 
 class CelestialBody:
@@ -102,27 +97,6 @@ class GameData:
         return copy(lower_bodies[body_name.lower()])
 
 
-"""
-  Sun
-    Dres
-    Duna
-      Ike
-    Eeloo
-    Eve
-      Gilly
-    Jool
-      Bop
-      Laythe
-      Pol
-      Tylo
-      Vall
-    Kerbin
-      Minmus
-      Mun
-    Moho
-"""
-
-
 class ShowOptions(argparse.Action):
     def __init__(self, option_strings, dest=argparse.SUPPRESS, default=argparse.SUPPRESS, help=None):
         argparse.Action.__init__(self, option_strings=option_strings, dest=dest, default=default, nargs=0, help=help)
@@ -167,32 +141,19 @@ class ShowOptions(argparse.Action):
         if start_index > end_index:
             return []
 
-        new_system_map = ["" for x in range(start_index, end_index + 1)]
+        new_system_map = ["" for _ in range(start_index, end_index + 1)]
         current_index = 0
         for body, data in system_map.items():
             if data[2] == parent_body:
                 new_system_map[current_index] = data[0] + body
 
-                for index, body_string in enumerate(self.recursive_system_sorter(body, current_index + 1,
-                                                                           current_index + data[1], system_map)):
+                for index, body_string in enumerate(
+                        self.recursive_system_sorter(body, current_index + 1, current_index + data[1], system_map)):
                     new_system_map[current_index + 1 + index] = body_string
 
                 current_index += data[1] + 1
 
         return new_system_map
-
-
-
-
-        starting_indent = "  "
-        current_index = 0
-
-        for body, data in system_map.items():
-            if data[0] == starting_indent:
-                print(body, current_index + 1, data[1])
-                current_index += data[1] + 1
-
-                # new_system_map[current_index % len(new_system_map)] = body
 
 
 def read_game_data(file_path: str) -> GameData:
@@ -203,7 +164,7 @@ def read_game_data(file_path: str) -> GameData:
 
 
 def valid_comm_parts(arg_value: str) -> dict[str, int]:
-    match = re.fullmatch(r"^(\d+:[\w\d\-_]+,?)+$", arg_value)
+    match = re.fullmatch(r"^\d+:[\w\d\-_]+(,\d+:[\w\d\-_]+)*,?$", arg_value)
     if match is None:
         raise TypeError
 
@@ -352,16 +313,16 @@ def calculate_minimum_comm_distance(comm_power_1: int, comm_power_2: int, minimu
     return int(round(max_comm_range * (1 - sol)))
 
 
-def create_comm_matrix(relay_power: int, minimum_strength: float, game_data: GameData):
+def create_comm_matrix(relay_power: int, minimum_strength: float, max_quantity: int, game_data: GameData):
     sorted_comm_list: list[tuple[str, CommPart]] = \
         sorted(game_data.comm_parts.items(), key=lambda x: (x[1].relay, x[1].power))
 
-    comm_matrix = [["Communication Part", "Quantity 1", "Quantity 2", "Quantity 3", "Quantity 4"]]
+    comm_matrix = [["Communication Part", *[f"Quantity {x}" for x in range(1, max_quantity + 1)]]]
     for comm_part in sorted_comm_list:
         current_part = copy(comm_part[1])
 
         distances = []
-        for i in range(1, 5):  # TODO Make this value configurable
+        for i in range(1, max_quantity + 1):
             current_part.add_quantity(i)
             distances.append(pretty_distance(calculate_minimum_comm_distance(
                 relay_power, calculate_combined_comm_power([current_part]), minimum_strength), 3))
@@ -371,37 +332,40 @@ def create_comm_matrix(relay_power: int, minimum_strength: float, game_data: Gam
     return comm_matrix
 
 
-def create_orbit_recommendation_matrix(min_orbit: int, amount_of_recommendations: int,
-                                       target_body: CelestialBody) -> list[list[str]]:
-    # Round up to the nearest hour multiple of 3
+def create_orbit_suggestion_matrix(min_orbit: int, num_suggestions: int,
+                                   target_body: CelestialBody) -> tuple[list[list[str]], bool]:
     start_orbit_period = 10800 * round(math.ceil(target_body.calculate_orbital_period(min_orbit, min_orbit)) / 10800)
+    # Round orbital period up to the nearest multiple of 3 hours
 
-    recommendations = [["Satellite Radius", "Satellite Period",
-                        "Phase Periapsis", "Phase Period", "Delta-V for Transfer"]]
+    suggestions = [["Satellite Radius", "Satellite Period",
+                    "Phase Periapsis", "Phase Period", "Delta-V for Transfer"]]
     i = 0
-    while len(recommendations) - 1 < amount_of_recommendations:
-        possible_recommendation = target_body.calculate_orbit_radius_with_period(start_orbit_period + 10800 * i)
+    while len(suggestions) - 1 < num_suggestions:
+        possible_suggestion = target_body.calculate_orbit_radius_with_period(start_orbit_period + 10800 * i)
 
-        if possible_recommendation > target_body.sphere_of_influence:
+        if possible_suggestion > target_body.sphere_of_influence:
             break
 
         phase_orbit = target_body.calculate_periapsis_with_apoapsis_and_period(
-            possible_recommendation, int(round((start_orbit_period + 10800 * i) * 0.666666666)))
+            possible_suggestion, int(round((start_orbit_period + 10800 * i) * 0.666666666)))
 
         if phase_orbit <= 0:
             i += 1
             continue
 
-        satellite_radius = pretty_distance(possible_recommendation)
+        satellite_radius = pretty_distance(possible_suggestion)
         satellite_period = pretty_time(start_orbit_period + 10800 * i)
         phase_periapsis = pretty_distance(phase_orbit)
         phase_period = pretty_time(int(round((start_orbit_period + 10800 * i) * 0.666666666)))
-        delta_v = pretty_speed(target_body.calculate_delta_v_for_hohmann_transfer(phase_orbit, possible_recommendation))
+        delta_v = pretty_speed(target_body.calculate_delta_v_for_hohmann_transfer(phase_orbit, possible_suggestion))
 
-        recommendations.append([satellite_radius, satellite_period, phase_periapsis, phase_period, delta_v])
+        suggestions.append([satellite_radius, satellite_period, phase_periapsis, phase_period, delta_v])
         i += 1
 
-    return recommendations
+    if len(suggestions) - 1 < num_suggestions:
+        return suggestions, False
+
+    return suggestions, True
 
 
 def main():
@@ -411,15 +375,23 @@ def main():
         game_data = read_game_data(GAME_DATA_FILE_PATH)
 
     except FileNotFoundError:
-        print("Program Failure - game data file does not exist")
+        print(f"The game data file {GAME_DATA_FILE_PATH} does not exist.\n")
         exit()
+
+    except Exception:
+        print()
+        exit(f"Unexpected error in game data read.\nEnsure file {GAME_DATA_FILE_PATH} "
+             f"exists and is of the correct format")
 
     # ================ Initialise argparse ================
 
-    help_epilog = """
-    examples:
-      ksp_comm_array_calc.py -tb Mun -cp 2:HG5 -ms 80
-      ksp_comm_array_calc.py -tb Gilly -cp 2:HG5,3:RA2
+    help_epilog = """Note: Only include the communication parts that will be used for relaying signals. 
+    Additional parts for the vessel itself to communicate should not be included.
+
+examples:
+  ksp_comm_array_calc.py -tb Mun -cp 2:HG5
+  ksp_comm_array_calc.py -tb Gilly -cp 2:HG5,3:RA2 -ms 55
+  ksp_comm_array_calc.py -tb Duna -cp 1:HG5,5:RA15 -ms 62 -ns 7 -mq 5
     """
 
     parser = argparse.ArgumentParser(epilog=help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -430,10 +402,14 @@ def main():
                         help="the celestial body that the array will be orbiting")
     parser.add_argument("-cp", "--comm-parts", dest="comm_parts", type=valid_comm_parts, required=True,
                         help="this is the quantity and model of comm parts that will be on each satellite. "
-                             "formatted as \"[num]:[alias]\". multiple models should be separated by a comma.")
+                             "formatted as \"[num]:[alias]\". multiple parts should be in a comma separated list.")
     parser.add_argument("-ms", "--min-strength", dest="min_strength", type=valid_percent, default="80%",
                         help="the minimum signal strength for anything inside the relays SOI "
                              "expressed as an integer percentage. default is %(default)s")
+    parser.add_argument("-ns", "--num-suggestions", dest="num_suggestions", type=int, default=5,
+                        help="the number of suggested orbits to return. default is %(default)s")
+    parser.add_argument("-mq", "--max-quantity", dest="max_quantity", type=int, default=5,
+                        help="the number of comm parts that will be calculated up to. default is %(default)s")
 
     # ================ Main Execution ================
 
@@ -449,13 +425,22 @@ def main():
         print(f"The target body: \"{args.target_body}\" does not exist. use -so for a full list.\n")
         exit()
 
-    # TODO Check that all comm parts are actually combinable
     for comm_part in args.comm_parts:
         if not game_data.verify_comm_part(comm_part):
             print(f"The communication part: \"{comm_part}\" does not exist. use -so for a full list.\n"
                   f"Remember the -cp argument expects the alias of the part and not the full name.\n")
             exit()
 
+    if args.num_suggestions <= 0:
+        print(f"Program must return at least 1 suggestion :(\n")
+        exit()
+
+    if args.max_quantity <= 0:
+        print(f"Program must display at least 1 quantity of parts.\n")
+        exit()
+
+    num_suggestions: int = args.num_suggestions
+    max_quantity: int = args.max_quantity
     target_body: CelestialBody = game_data.get_celestial_body(args.target_body)
     min_strength: float = args.min_strength
 
@@ -464,6 +449,12 @@ def main():
         cp = game_data.get_comm_part(game_data.get_part_name_from_alias(alias))
         cp.add_quantity(quantity)
         comm_parts.append(cp)
+
+    for comm_part in comm_parts:
+        if not comm_part.relay:
+            print(f"The communication part: \"{comm_part.full_name}\" is not capable of relaying a signal"
+                  f" and shouldn't be included in calculations.\n")
+            exit()
 
     # ================ Output Relevant Information ================
 
@@ -481,10 +472,9 @@ def main():
     minimum_orbit = target_body.radius
     antenna_combined_power = calculate_combined_comm_power(comm_parts)
 
-    matrix_of_comm_parts = create_comm_matrix(antenna_combined_power, min_strength, game_data)
+    matrix_of_comm_parts = create_comm_matrix(antenna_combined_power, min_strength, max_quantity, game_data)
 
-    matrix_of_recommended_orbits = create_orbit_recommendation_matrix(minimum_orbit, 5, target_body)
-    # TODO Make number of recs configurable
+    matrix_of_suggested_orbits, fulfilled_quota = create_orbit_suggestion_matrix(minimum_orbit, num_suggestions, target_body)
 
     # ================ Display Calculated Values ================
     print(f"  Combined power of all antennas on satellite: {pretty_distance(antenna_combined_power)}")
@@ -497,11 +487,14 @@ def main():
     print("  When using these values as orbits remember to factor in the radius of the target body.")
     print()
 
-    table_of_recommended_orbits = pretty_table(matrix_of_recommended_orbits, "  ", True)
-    length_of_table = len(table_of_recommended_orbits.split("\n")[0])
-    print("  " + "=" * (length_of_table // 2 - 10) + " Recommended Orbits " + "=" *
-          (length_of_table // 2 - (10 if length_of_table % 2 == 0 else 11)))
-    print(table_of_recommended_orbits)
+    table_of_suggested_orbits = pretty_table(matrix_of_suggested_orbits, "  ", True)
+    length_of_table = len(table_of_suggested_orbits.split("\n")[0])
+    print("  " + "=" * (length_of_table // 2 - 9) + " Suggested Orbits " + "=" *
+          (length_of_table // 2 - (9 if length_of_table % 2 == 0 else 10)))
+    print(table_of_suggested_orbits)
+    if not fulfilled_quota:
+        print(f"\n  Only {len(matrix_of_suggested_orbits) - 1} of the {num_suggestions} "
+              f"orbits were able to be calculated as higher orbits will exceed the targets SOI")
     print()
 
 

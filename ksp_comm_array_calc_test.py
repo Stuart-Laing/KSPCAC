@@ -53,6 +53,8 @@ class TestArgValidFunctions(unittest.TestCase):
             valid_comm_parts("1:HG_5,5:")
         with self.assertRaises(TypeError):
             valid_comm_parts("1:HG5,2:HG5")
+        with self.assertRaises(TypeError):
+            valid_comm_parts("1:HG52:HG5")
 
 
 class TestGameData(unittest.TestCase):
@@ -82,27 +84,32 @@ class TestGameData(unittest.TestCase):
 
 class TestCelestialBody(unittest.TestCase):
     def test_calculate_orbital_period(self):
-        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000, "sphere of influence": 0})
+        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000,
+                                      "sphere of influence": 0, "parent body": ""})
 
         self.assertEqual(28800, body.calculate_orbital_period(1254850, 565650))
         self.assertEqual(43200, body.calculate_orbital_period(1254850, 1254850))
 
     def test_calculate_orbit_radius_with_period(self):
-        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000, "sphere of influence": 0})
+        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000,
+                                      "sphere of influence": 0, "parent body": ""})
 
         self.assertEqual(1254855, body.calculate_orbit_radius_with_period(43200))
 
     def test_calculate_periapsis_with_apoapsis_and_period(self):
-        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000, "sphere of influence": 0})
+        body = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000,
+                                      "sphere of influence": 0, "parent body": ""})
 
         self.assertEqual(565669, body.calculate_periapsis_with_apoapsis_and_period(1254855, 28800))
 
     def test_calculate_delta_v_for_hohmann_transfer(self):
-        body_1 = CelestialBody("test", {"radius": 600000, "mass": 52915158000000000000000, "sphere of influence": 0})
+        body_1 = CelestialBody("test", {"radius": 600000, "mass": 52915158000000000000000,
+                                        "sphere of influence": 0, "parent body": ""})
 
         self.assertEqual(153, body_1.calculate_delta_v_for_hohmann_transfer(80000, 300000))
 
-        body_2 = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000, "sphere of influence": 0})
+        body_2 = CelestialBody("test", {"radius": 200000, "mass": 975990660000000000000,
+                                        "sphere of influence": 0, "parent body": ""})
         self.assertEqual(46, body_2.calculate_delta_v_for_hohmann_transfer(432000, 1000000))
 
 
