@@ -324,6 +324,16 @@ def create_comm_matrix(relay_power: int, minimum_strength: float, max_quantity: 
         distances = []
         for i in range(1, max_quantity + 1):
             current_part.add_quantity(i)
+
+            if not current_part.combinable:
+                if i == 1:
+                    distances.append(pretty_distance(calculate_minimum_comm_distance(
+                        relay_power, calculate_combined_comm_power([current_part]), minimum_strength), 3))
+                    continue
+                else:
+                    distances.append("N/A")
+                    continue
+
             distances.append(pretty_distance(calculate_minimum_comm_distance(
                 relay_power, calculate_combined_comm_power([current_part]), minimum_strength), 3))
 
@@ -386,12 +396,12 @@ def main():
     # ================ Initialise argparse ================
 
     help_epilog = """Note: Only include the communication parts that will be used for relaying signals. 
-    Additional parts for the vessel itself to communicate should not be included.
+      Additional parts for the vessel itself to communicate should not be included.
 
 examples:
   ksp_comm_array_calc.py -tb Mun -cp 2:HG5
-  ksp_comm_array_calc.py -tb Gilly -cp 2:HG5,3:RA2 -ms 55
-  ksp_comm_array_calc.py -tb Duna -cp 1:HG5,5:RA15 -ms 62 -ns 7 -mq 5
+  ksp_comm_array_calc.py -tb Gilly -cp 2:HG5,3:RA2 -ms 55%
+  ksp_comm_array_calc.py -tb Sun -cp 1:HG5,5:RA15 -ms 62 -ns 7 -mq 5
     """
 
     parser = argparse.ArgumentParser(epilog=help_epilog, formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -480,7 +490,7 @@ examples:
     print(f"  Combined power of all antennas on satellite: {pretty_distance(antenna_combined_power)}")
     print(f"  Minimum viable orbit: {pretty_distance(minimum_orbit)}")
     print()
-    print(f"  Minimum distance for {int(min_strength*100)}% signal strength with a given quantity of the part.")
+    print(f"  Maximum distance for {int(min_strength*100)}% signal strength with a given quantity of the part.")
     print(pretty_table(matrix_of_comm_parts, "  ", True))
     print()
     print("  These values can be considered the maximum orbits for a given use case.")
