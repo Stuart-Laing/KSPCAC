@@ -4,10 +4,13 @@ You provide the body you plan to orbit and the communication parts on each satel
 of possible orbits that you can choose from. It also provides the phase orbits to allow for easy deployment.
 
 # Theory
+Three satellites is the minimum number to ensure that any vessel on the surface or orbit of a body will always be in range. Launching three separate rockets and attempting to match the orbits is a pain and not recommended. Instead you can have a single rocket go in to a slightly lower orbit than the goal and one by one drop off and accelerate the satellites to the final orbit.
+
+<img src="stable-orbit.gif" width="300"/> <img src="deployment.gif" width="300"/>
+
 These two YouTube videos by Mike Aben do a great job of explaining the math and reasons for this approach.
 - [The math of why specific orbits are best](https://youtu.be/gpQmvwU1x8c)
 - [How to actually deploy the satellites](https://youtu.be/l9oPvLp7YlQ)
-
 
 # Installation
 To install just clone the repo and install the requirements
