@@ -14,7 +14,7 @@ To install just clone the repo and install the requirements
 ```commandline
 Python 3.10.x
 
-git clone https://github.com/Stuart-Laing/ksp_comm_array_calculator
+git clone https://github.com/Stuart-Laing/KSPCAC
 py -m pip install -r ksp_comm_array_calculator/requirements.txt
 ```
 
