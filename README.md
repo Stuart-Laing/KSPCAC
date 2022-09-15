@@ -18,17 +18,17 @@ To install just clone the repo and install the requirements
 Python 3.10.x
 
 git clone https://github.com/Stuart-Laing/KSPCAC
-py -m pip install -r ksp_comm_array_calculator/requirements.txt
+py -m pip install -r KSPCAC/requirements.txt
 ```
 
 # Usage
 To get a list of all the options use:
 ```
-py ksp_comm_array_calc.py -h
+py kspcac.py -h
 ```
 
 ```
-usage: ksp_comm_array_calc.py [-h] [-so] -tb TARGET_BODY -cp COMM_PARTS [-ms MIN_STRENGTH] [-ns NUM_SUGGESTIONS] [-mq MAX_QUANTITY]
+usage: kspcac.py [-h] [-so] -tb TARGET_BODY -cp COMM_PARTS [-ms MIN_STRENGTH] [-ns NUM_SUGGESTIONS] [-mq MAX_QUANTITY]
 
 options:
   -h, --help            show this help message and exit
@@ -49,9 +49,9 @@ Note: Only include the communication parts that will be used for relaying signal
       Additional parts for the vessel itself to communicate should not be included.
 
 examples:
-  ksp_comm_array_calc.py -tb Mun -cp 2:HG5
-  ksp_comm_array_calc.py -tb Gilly -cp 2:HG5,3:RA2 -ms 55%
-  ksp_comm_array_calc.py -tb Sun -cp 1:HG5,5:RA15 -ms 62 -ns 7 -mq 5
+  kspcac.py -tb Mun -cp 2:HG5
+  kspcac.py -tb Gilly -cp 2:HG5,3:RA2 -ms 55%
+  kspcac.py -tb Sun -cp 1:HG5,5:RA15 -ms 62 -ns 7 -mq 5
 ```
 
 The flag `-so` will show the available bodies and communication parts that can be selected from.
@@ -91,7 +91,7 @@ So if I wish to get information about the following situation:
 - Only show up to 3 comm parts
 - Suggest 3 orbits
 ```
-py ksp_comm_array_calc.py -tb Mun -cp 2:HG5 -ms 80% -mq 3 -ns 3
+py kspcac.py -tb Mun -cp 2:HG5 -ms 80% -mq 3 -ns 3
 
   Target body: Mun
   Target radius: 200 km
