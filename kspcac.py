@@ -302,7 +302,7 @@ def calculate_combined_comm_power(comm_parts: list[CommPart]) -> int:
     return int(round(highest_power * math.pow((sum_of_powers/highest_power), avg_compatibility_exponent)))
 
 
-def calculate_minimum_comm_distance(comm_power_1: int, comm_power_2: int, minimum_strength: float):
+def calculate_maximum_comm_distance(comm_power_1: int, comm_power_2: int, minimum_strength: float):
     # TODO Make sure this works in all cases
     max_comm_range = math.sqrt(comm_power_1 * comm_power_2)
 
@@ -327,14 +327,14 @@ def create_comm_matrix(relay_power: int, minimum_strength: float, max_quantity: 
 
             if not current_part.combinable:
                 if i == 1:
-                    distances.append(pretty_distance(calculate_minimum_comm_distance(
+                    distances.append(pretty_distance(calculate_maximum_comm_distance(
                         relay_power, calculate_combined_comm_power([current_part]), minimum_strength), 3))
                     continue
                 else:
                     distances.append("N/A")
                     continue
 
-            distances.append(pretty_distance(calculate_minimum_comm_distance(
+            distances.append(pretty_distance(calculate_maximum_comm_distance(
                 relay_power, calculate_combined_comm_power([current_part]), minimum_strength), 3))
 
         comm_matrix.append([comm_part[0], *distances])
@@ -441,6 +441,10 @@ examples:
                   f"Remember the -cp argument expects the alias of the part and not the full name.\n")
             exit()
 
+    if args.min_strength >= 1:
+        print(f"Signal strength cannot be 100% due to how ksp does its calculations. Settle for 99%\n")
+        exit()
+
     if args.num_suggestions <= 0:
         print(f"Program must return at least 1 suggestion :(\n")
         exit()
@@ -487,6 +491,7 @@ examples:
     matrix_of_suggested_orbits, fulfilled_quota = create_orbit_suggestion_matrix(minimum_orbit, num_suggestions, target_body)
 
     # ================ Display Calculated Values ================
+
     print(f"  Combined power of all antennas on satellite: {pretty_distance(antenna_combined_power)}")
     print(f"  Minimum viable orbit: {pretty_distance(minimum_orbit)}")
     print()

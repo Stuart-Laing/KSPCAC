@@ -3,7 +3,7 @@ from kspcac import CelestialBody, CommPart
 from kspcac import valid_percent, valid_comm_parts
 from kspcac import read_game_data, GAME_DATA_FILE_PATH
 from kspcac import pretty_distance, pretty_time, pretty_speed
-from kspcac import calculate_combined_comm_power, calculate_minimum_comm_distance
+from kspcac import calculate_combined_comm_power, calculate_maximum_comm_distance
 
 
 # TODO Make these tests use hard coded values instead of reading from the json file
@@ -185,10 +185,10 @@ class TestCommunicationCalculators(unittest.TestCase):
         self.assertEqual(100000375000, calculate_combined_comm_power([CommPart("Test Part 1", test_part_2, 1),
                                                                       CommPart("Test Part 2", test_part_3, 1)]))
 
-    def test_calculate_minimum_comm_distance(self):
-        self.assertEqual(454009, calculate_minimum_comm_distance(5000000, 500000, 0.8))
+    def test_calculate_maximum_comm_distance(self):
+        self.assertEqual(454009, calculate_maximum_comm_distance(5000000, 500000, 0.8))
 
-        self.assertEqual(588777, calculate_minimum_comm_distance(8408964, 500000, 0.8))
+        self.assertEqual(588777, calculate_maximum_comm_distance(8408964, 500000, 0.8))
 
 
 class FullArgumentPassingFailureTests(unittest.TestCase):
